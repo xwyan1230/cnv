@@ -4,7 +4,7 @@
 library(ArchR)
 library(ComplexHeatmap)
 set.seed(1)
-addArchRGenome("hg19")
+addArchRGenome("hg38")
 library(magrittr)
 library(ggplot2)
 library(Rcpp)
@@ -17,7 +17,7 @@ library(GenomicRanges)
 library(edgeR)
 library(Seurat)
 packageVersion('Seurat')
-library(BSgenome.Hsapiens.UCSC.hg19)
+library(BSgenome.Hsapiens.UCSC.hg38)
 
 #-----------------
 # Reading Fragment Files
@@ -95,7 +95,7 @@ countInsertions <- function(query, fragments, by = "RG"){
 
 ##For CNV, default windowSize = 10e6, slidingSize = 2e6
 ##For ecDNA, windowSize = 1e6, slidingSize = 2e5
-window.Size = 10e6; sliding.Size = 2e6
+window.Size = 1e6; sliding.Size = 2e5
 makeWindows <- function(genome, blacklist, windowSize = window.Size, slidingSize = sliding.Size){
 	chromSizes <- GRanges(names(seqlengths(genome)), IRanges(1, seqlengths(genome)))
 	chromSizes <- GenomeInfoDb::keepStandardChromosomes(chromSizes, pruning.mode = "coarse")
