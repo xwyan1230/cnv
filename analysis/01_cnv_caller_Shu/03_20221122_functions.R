@@ -20,7 +20,7 @@ library(BSgenome.Hsapiens.UCSC.hg38)
 
 # For CNV, default windowSize = 10e6, slidingSize = 2e6
 # For ecDNA, windowSize = 1e6, slidingSize = 2e5
-window.Size = 1e6; sliding.Size = 2e5
+window.Size = 1e5; sliding.Size = 2e4
 makeWindows <- function(genome, blacklist, windowSize = window.Size, slidingSize = sliding.Size){
   chromSizes <- GRanges(names(seqlengths(genome)), IRanges(1, seqlengths(genome)))
   chromSizes <- GenomeInfoDb::keepStandardChromosomes(chromSizes, pruning.mode = "coarse")
@@ -45,6 +45,41 @@ makeWindows <- function(genome, blacklist, windowSize = window.Size, slidingSize
   windowNuc <- lapply(seq_along(windowSplit), function(x){
     message(sprintf("%s of %s", x, length(windowSplit)))
     chrSeq <- Biostrings::getSeq(genome,chromSizes[which(seqnames(chromSizes)==names(windowSplit)[x])])
+    grx <- windowSplit[[x]]
+    aFreq <- alphabetFrequency(Biostrings::Views(chrSeq[[1]], ranges(grx)))
+    mcols(grx)$GC <- rowSums(aFreq[, c("G","C")]) / rowSums(aFreq)
+    mcols(grx)$AT <- rowSums(aFreq[, c("A","T")]) / rowSums(aFreq)
+    return(grx)
+  }) %>% GRangesList %>% unlist %>% sortSeqlevels %>% sort
+  windowNuc$N <- 1 - (windowNuc$GC + windowNuc$AT)
+  windowNuc
+}
+
+
+makeWindows_sub <- function(genome, blacklist, chromSizes, windowSize = window.Size, slidingSize = sliding.Size){
+  chromSizes_genome <- GRanges(names(seqlengths(genome)), IRanges(1, seqlengths(genome)))
+  chromSizes_genome <- GenomeInfoDb::keepStandardChromosomes(chromSizes_genome, pruning.mode = "coarse")
+  windows <- slidingWindows(x = chromSizes, width = windowSize, step = slidingSize) %>% unlist %>% .[which(width(.)==windowSize),]
+  mcols(windows)$wSeq <- as.character(seqnames(windows))
+  mcols(windows)$wStart <- start(windows)
+  mcols(windows)$wEnd <- end(windows)
+  message("Subtracting Blacklist...")
+  windowsBL <- lapply(seq_along(windows), function(x){
+    if(x %% 100 == 0){
+      message(sprintf("%s of %s", x, length(windows)))
+    }
+    gr <- GenomicRanges::setdiff(windows[x,], blacklist)
+    mcols(gr) <- mcols(windows[x,])
+    return(gr)
+  })
+  names(windowsBL) <- paste0("w",seq_along(windowsBL))
+  windowsBL <- unlist(GRangesList(windowsBL), use.names = TRUE)
+  mcols(windowsBL)$name <- names(windowsBL)
+  message("Adding Nucleotide Information...")
+  windowSplit <- split(windowsBL, as.character(seqnames(windowsBL)))
+  windowNuc <- lapply(seq_along(windowSplit), function(x){
+    message(sprintf("%s of %s", x, length(windowSplit)))
+    chrSeq <- Biostrings::getSeq(genome,chromSizes_genome[which(seqnames(chromSizes_genome)==names(windowSplit)[x])])
     grx <- windowSplit[[x]]
     aFreq <- alphabetFrequency(Biostrings::Views(chrSeq[[1]], ranges(grx)))
     mcols(grx)$GC <- rowSums(aFreq[, c("G","C")]) / rowSums(aFreq)

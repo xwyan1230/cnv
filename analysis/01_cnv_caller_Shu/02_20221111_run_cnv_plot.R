@@ -22,25 +22,33 @@ source('/Users/xwyan/Dropbox/LAB/github/2022_cnv/cnv/analysis/01_cnv_caller_Shu/
 # ----------------------------
 # Get Inputs
 # ----------------------------
-input_dir <- c("/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221106_scMultiome_ColoDM-ColoHSR/COLO320HSR_5k/03_analysis/")
-save_dir <- c("/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221106_scMultiome_ColoDM-ColoHSR/COLO320HSR_5k/03_analysis/")
-sample <- c("COLO320HSR_5k_rep1")
+input_dir <- c("/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221106_analysis_scMultiome_ColoDM-ColoHSR/COLO320DM_5k/03_analysis/")
+save_dir <- c("/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221106_analysis_scMultiome_ColoDM-ColoHSR/COLO320DM_5k/03_analysis/")
+sample <- c("COLO320DM_5k_rep1")
 chr = 8
 used.chr<- paste0(c('chr'), chr)
 
 # ----------------------------
 # Window generation
 # ----------------------------
-# blacklist was downloaded from:https://github.com/Boyle-Lab/Blacklist/tree/master/lists
-# blacklist was originally described in paper The ENCODE Blacklist: Identification of Problematic Regions of the Genome (June 2019)
+# # blacklist was downloaded from:https://github.com/Boyle-Lab/Blacklist/tree/master/lists
+# # blacklist was originally described in paper The ENCODE Blacklist: Identification of Problematic Regions of the Genome (June 2019)
 # blacklist <- import.bed("/Users/xwyan/Dropbox/LAB/Seqbasic/resources/blacklist/hg38-blacklist.v2.bed")
+
+# # make whole genome windows
 # windows <- makeWindows(genome = BSgenome.Hsapiens.UCSC.hg38, blacklist = blacklist)
 # saveRDS(windows, paste0(save_dir, 'hg38_blacklist_window1e6_sliding2e5.rds'))
+
+# # make windows for certain range
+# chromSizes <- GRanges(seqnames = c('chr8'), ranges = IRanges(120000001, 130000001))
+# windows <- makeWindows_sub(genome = BSgenome.Hsapiens.UCSC.hg38, blacklist = blacklist, chromSizes = chromSizes)
+# df <- data.frame(windows)
+# saveRDS(windows, paste0(save_dir, 'hg38_blacklist_chr8_120000001-130000001_window1e5_sliding2e4.rds'))
 
 # ----------------------------
 # Window and ATAC reads loading
 # ----------------------------
-windows1 <- readRDS(paste0(input_dir, 'hg38_blacklist_window1e6_sliding2e5.rds'))
+windows1 <- readRDS(paste0(input_dir, 'hg38_blacklist_chr8_120000001-130000001_window1e5_sliding2e4.rds'))
 windows1_chr <- windows1[windows1@seqnames %in% used.chr,]
 
 fragments <- readRDS(paste0(input_dir, sample, "_chr", chr, ".gr.rds"))
@@ -56,8 +64,8 @@ rownames(data_counts) <- rownames(cnaObj@colData)
 colnames(data_counts) <- cnaObj@rowRanges@ranges@start
 df_log2FC <- data.frame(data_log2FC)
 df_counts <- data.frame(data_counts)
-write.table(df_log2FC, paste0(save_dir, sample, "_window1e6_sliding2e5_chr8_log2FC.txt"), sep='\t')
-write.table(df_counts, paste0(save_dir, sample, "_window1e6_sliding2e5_chr8_counts.txt"), sep='\t')
+write.table(df_log2FC, paste0(save_dir, sample, "_chr8_120000001-130000001_window1e5_sliding2e4_log2FC.txt"), sep='\t')
+write.table(df_counts, paste0(save_dir, sample, "_chr8_120000001-130000001_window1e5_sliding2e4_counts.txt"), sep='\t')
 
 
 
