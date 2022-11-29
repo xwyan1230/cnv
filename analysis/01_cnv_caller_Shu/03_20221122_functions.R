@@ -20,6 +20,7 @@ library(BSgenome.Hsapiens.UCSC.hg38)
 
 # For CNV, default windowSize = 10e6, slidingSize = 2e6
 # For ecDNA, windowSize = 1e6, slidingSize = 2e5
+
 window.Size = 1e5; sliding.Size = 2e4
 makeWindows <- function(genome, blacklist, windowSize = window.Size, slidingSize = sliding.Size){
   chromSizes <- GRanges(names(seqlengths(genome)), IRanges(1, seqlengths(genome)))
